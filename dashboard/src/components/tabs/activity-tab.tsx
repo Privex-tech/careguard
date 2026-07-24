@@ -51,7 +51,9 @@ export function ActivityTab({
   // useMemo ensures the merge only reruns when transactions or audit events change,
   // not on unrelated parent state changes (agentLog, loading flags, etc.).
   const mergedTimeline = useMemo(() => {
-    type TimelineItem = { ts: number; kind: "tx" | "audit"; id: string; data: any };
+    type TimelineItem =
+      | { ts: number; kind: "tx"; id: string; data: Transaction }
+      | { ts: number; kind: "audit"; id: string; data: AuditLogEvent };
     const txItems: TimelineItem[] = allTransactions.map((tx) => ({
       kind: "tx",
       ts: new Date(tx.timestamp).getTime(),
@@ -69,7 +71,8 @@ export function ActivityTab({
     // inputs are already ordered.
     auditItems.sort((a, b) => b.ts - a.ts);
     const merged: TimelineItem[] = [];
-    let ti = 0, ai = 0;
+    let ti = 0,
+      ai = 0;
     while (ti < txItems.length && ai < auditItems.length) {
       if (txItems[ti].ts >= auditItems[ai].ts) merged.push(txItems[ti++]);
       else merged.push(auditItems[ai++]);
@@ -103,7 +106,9 @@ export function ActivityTab({
         }}
       />
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-700">Transaction Log</h2>
+        <h2 className="text-sm font-semibold text-slate-700">
+          Transaction Log
+        </h2>
         <div className="flex items-center gap-3">
           {allTransactions.length > 0 && (
             <button
@@ -259,9 +264,12 @@ export function ActivityTab({
                 <tbody>
                   {mergedTimeline.map((item) => {
                     if (item.kind === "audit") {
-                      const au = item.data as AuditLogEvent;
+                      const au = item.data;
                       return (
-                        <tr key={item.id} className="border-b border-slate-100 last:border-0 bg-slate-50/50">
+                        <tr
+                          key={item.id}
+                          className="border-b border-slate-100 last:border-0 bg-slate-50/50"
+                        >
                           <td className="hidden md:table-cell px-4 py-2 text-xs text-slate-400">
                             {new Date(au.timestamp).toLocaleTimeString()}
                           </td>
@@ -271,16 +279,28 @@ export function ActivityTab({
                             </span>
                           </td>
                           <td className="px-4 py-2 text-xs">
-                            <span className="font-semibold text-slate-700">{au.event}</span>
-                            {au.details?.tool && <span className="text-slate-500 ml-1">— Tool: {au.details.tool}</span>}
+                            <span className="font-semibold text-slate-700">
+                              {au.event}
+                            </span>
+                            {au.details?.tool && (
+                              <span className="text-slate-500 ml-1">
+                                — Tool: {au.details.tool}
+                              </span>
+                            )}
                           </td>
-                          <td className="px-4 py-2 text-right text-xs font-mono text-slate-400">-</td>
-                          <td className="px-4 py-2 text-right text-xs text-slate-500">{au.actor}</td>
-                          <td className="px-4 py-2 text-right text-xs text-slate-400">-</td>
+                          <td className="px-4 py-2 text-right text-xs font-mono text-slate-400">
+                            -
+                          </td>
+                          <td className="px-4 py-2 text-right text-xs text-slate-500">
+                            {au.actor}
+                          </td>
+                          <td className="px-4 py-2 text-right text-xs text-slate-400">
+                            -
+                          </td>
                         </tr>
                       );
                     }
-                    const tx = item.data as Transaction;
+                    const tx = item.data;
                     return (
                       <tr
                         key={tx.id}
@@ -323,7 +343,10 @@ export function ActivityTab({
                           </span>
                         </td>
                         <td className="px-4 py-2 text-right">
-                          <TxLink hash={tx.stellarTxHash} txHashStatus={tx.txHashStatus} />
+                          <TxLink
+                            hash={tx.stellarTxHash}
+                            txHashStatus={tx.txHashStatus}
+                          />
                         </td>
                       </tr>
                     );
