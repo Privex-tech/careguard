@@ -26,6 +26,10 @@
     "e2e": "cd dashboard && npx playwright test --config ../e2e/playwright.config.ts",
     "load": "k6 run load/agent-run.js",
     "load:bill-audit": "k6 run load/bill-audit.js",
+    "load:pharmacy-compare": "k6 run load/pharmacy-compare.js",
+    "load:drug-interactions": "k6 run load/drug-interactions.js",
+    "load:pharmacy-order": "k6 run load/pharmacy-order.js",
+    "load:agent-stream": "k6 run load/agent-stream.js",
     "check:env-vars": "tsx scripts/check-env-vars.ts"
   },
   "keywords": [],
