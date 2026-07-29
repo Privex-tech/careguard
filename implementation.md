@@ -384,3 +384,33 @@ Sets default file ownership route to `@harystyleseze`.
 Verify rendering structure on GitHub by validating form layouts.
 
 
+# Implementation Plan: Runbook — Tuning Rate-Limit Thresholds Safely (#746)
+
+Add operator guidance for tuning `RATE_LIMIT_*` thresholds in `shared/rate-limit.ts`: how to read the rate-limit metrics, choose new thresholds, and roll them out without locking out the dashboard.
+
+## Proposed Changes
+
+### Runbooks & Documentation
+
+#### [NEW] [rate-limit-tuning.md](docs/runbooks/rate-limit-tuning.md)
+New runbook following the `Symptom → Impact → Diagnosis → Mitigation → Remediation → Post-mortem template` structure from `docs/runbooks/README.md`. Documents:
+- Every env var parsed in `shared/rate-limit.ts` (`RATE_LIMIT_AGENT_RUN`, `RATE_LIMIT_BILL_AUDIT`, `RATE_LIMIT_PHARMACY_COMPARE`, `RATE_LIMIT_DRUG_INTERACTIONS`, `RATE_LIMIT_PHARMACY_ORDER`) with defaults, policy label, and mounted route — sourced directly from `RATE_LIMIT_DEFAULTS` and `perRouteLimiters` in the file, cross-checked against the actual `app.get`/`app.post` mount points in `server.ts`.
+- The fixed 60s window (`DEFAULT_WINDOW_MS`) has no env var — only `max` is tunable.
+- The three hardcoded, non-env-configurable policies (`agent`, `default`, `x402`) that share the same `ratelimit_hits_total` metric, and the concrete interaction the issue asked for: the dashboard's `/agent/*` polling (`use-agent-state.ts`: 3s/5s/10s intervals) is bound by the hardcoded `agent` policy (max 5/60s), not by `RATE_LIMIT_AGENT_RUN` — so raising the wrong env var looks like a no-op.
+- `ratelimit_hits_total{policy}` and `route_concurrent_requests{route}` as the metrics to watch, with an honest limitation noted: neither metric nor `shared/request-logger.ts`'s `http` log line carries client IP, so distinguishing "one abusive client" from "diffuse legitimate load" cannot be done from CareGuard's own signals alone.
+- Safe rollout: baseline via the metric, raise in ~50–100% increments, apply via `docker compose up -d <service>` (not `restart`) or Render Manual Deploy + Restart (env vars are read once at module load, no hot-reload), and confirm the new value actually took effect via the `RateLimit-Limit` response header (`standardHeaders: true`) — since `parseLimitEnv()` silently falls back to the default on a bad value with no log line.
+- Rollback: revert/unset the var, same restart procedure, re-confirm via the header.
+- Stellar Horizon's own default 3,600 req/hour per-IP limit (GCRA), verified against `developers.stellar.org`'s Horizon API reference, noted as a separate downstream ceiling relevant when raising `RATE_LIMIT_PHARMACY_ORDER`.
+
+#### [MODIFY] [README.md](docs/runbooks/README.md)
+Added one row to the Index table linking `rate-limit-tuning.md`. No other content changed.
+
+---
+
+## Verification Plan
+
+### Manual Verification
+- Every env var name, default, and policy label cross-checked line-by-line against `shared/rate-limit.ts`.
+- Every route path cross-checked against the actual `app.get`/`app.post` calls in `server.ts` (not assumed from naming).
+- Stellar Horizon rate-limit figure (3,600 req/hour, GCRA) verified via web search against `developers.stellar.org` (official Stellar docs), not asserted from memory.
+- No source files touched — `shared/rate-limit.ts` was read only, not modified, per the issue's scope.
