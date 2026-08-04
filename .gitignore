@@ -5,6 +5,7 @@ dist/
 .env.local
 .dev-seed
 *.log
+
 # data/ is a local working directory — PII-sensitive (medication lists, spending patterns, wallet activity)
 data/*
 !data/README.md
@@ -12,27 +13,34 @@ data/*
 !data/.gitkeep
 data/**/*.json
 data/**/*.jsonl
-.DS_Store
-fix.md
 
-# Test snapshots and generated test artefacts
-**/__snapshots__/
-**/*.snap
-playwright-report/
-test-results/
-coverage/
-.nyc_output/
-
-# Build artefacts
-dist/
-*.tsbuildinfo
-
-# Editor / OS noise
+# OS
 .DS_Store
 Thumbs.db
+
+# Editor / IDE
+.vscode/
+.idea/
 *.swp
 *.swo
-.idea/
+fix.md
+
+# Test artifacts
+coverage/
+.nyc_output/
+**/__snapshots__/
+**/*.snap
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Build artifacts
+*.tsbuildinfo
+.next/
+out/
+
+# Editor / OS noise
 *.iml
 
 # Dependency lock duplicates (keep root lockfiles, ignore nested generated ones)
@@ -40,8 +48,8 @@ Thumbs.db
 
 # Temporary / scratch files
 *.tmp
+*.temp
 *.bak
-fix.md
 ISSUES_*.md
 IMPLEMENTATION_SUMMARY.md
 implementation.md
