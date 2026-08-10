@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@sentry/nextjs": "^10.62.0",
-    "@tanstack/react-virtual": "^3.13.24",
+    "@tanstack/react-virtual": "^3.14.9",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
     "next": "^16.2.9",
